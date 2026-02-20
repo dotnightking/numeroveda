@@ -3,1068 +3,310 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NumeroVeda — Chaldean Numerology Engine</title>
+<title>NumeroVeda — Deep Chaldean Numerology Engine</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg: #0a0a0f;
-  --surface: #12121a;
-  --surface2: #1a1a26;
-  --border: #2a2a3a;
-  --text: #e8e6e3;
-  --text2: #9a96a0;
-  --gold: #d4a853;
-  --gold2: #b8912f;
-  --gold-glow: rgba(212,168,83,0.15);
-  --red: #e85454;
-  --red-glow: rgba(232,84,84,0.12);
-  --green: #4ade80;
-  --green-glow: rgba(74,222,128,0.12);
-  --blue: #60a5fa;
-  --purple: #a78bfa;
-}
-
-* { margin: 0; padding: 0; box-sizing: border-box; }
-
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'DM Sans', sans-serif;
-  min-height: 100vh;
-  overflow-x: hidden;
-}
-
-.noise {
-  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
-  pointer-events: none; z-index: 9999;
-}
-
-.container {
-  max-width: 880px; margin: 0 auto; padding: 20px;
-}
-
-header {
-  text-align: center; padding: 50px 20px 30px;
-  position: relative;
-}
-
-header::before {
-  content: ''; position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
-  width: 120px; height: 1px; background: linear-gradient(90deg, transparent, var(--gold), transparent);
-}
-
-.logo {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 42px; font-weight: 300; letter-spacing: 8px;
-  color: var(--gold);
-  text-transform: uppercase;
-  margin-bottom: 8px;
-}
-
-.tagline {
-  font-size: 12px; letter-spacing: 4px; text-transform: uppercase;
-  color: var(--text2); font-weight: 300;
-}
-
-.badge {
-  display: inline-block; margin-top: 14px; padding: 4px 14px;
-  border: 1px solid var(--border); border-radius: 20px;
-  font-size: 10px; letter-spacing: 2px; color: var(--text2);
-  text-transform: uppercase;
-}
-
-/* Input Section */
-.input-section {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 36px;
-  margin: 30px 0;
-  position: relative;
-  overflow: hidden;
-}
-
-.input-section::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-  background: linear-gradient(90deg, transparent, var(--gold2), transparent);
-}
-
-.input-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
-}
-
-@media (max-width: 600px) {
-  .input-grid { grid-template-columns: 1fr; }
-}
-
-.field { display: flex; flex-direction: column; gap: 6px; }
-
-.field label {
-  font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
-  color: var(--text2); font-weight: 500;
-}
-
-.field input {
-  background: var(--bg); border: 1px solid var(--border);
-  border-radius: 8px; padding: 14px 16px;
-  color: var(--text); font-family: 'DM Sans', sans-serif;
-  font-size: 15px; outline: none; transition: border-color 0.3s;
-}
-
-.field input:focus { border-color: var(--gold); }
-
-.field input::placeholder { color: #4a4656; }
-
-.field-full { grid-column: 1 / -1; }
-
-.btn {
-  grid-column: 1 / -1;
-  background: linear-gradient(135deg, var(--gold2), var(--gold));
-  border: none; border-radius: 8px; padding: 16px;
-  color: #0a0a0f; font-family: 'DM Sans', sans-serif;
-  font-size: 13px; font-weight: 600; letter-spacing: 3px;
-  text-transform: uppercase; cursor: pointer;
-  transition: all 0.3s; margin-top: 8px;
-}
-
-.btn:hover { transform: translateY(-1px); box-shadow: 0 8px 30px rgba(212,168,83,0.25); }
-
-/* Results */
-.results { display: none; margin-top: 0; }
-.results.active { display: block; animation: fadeUp 0.6s ease; }
-
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Score Ring */
-.score-hero {
-  text-align: center; padding: 40px 20px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  margin-bottom: 20px;
-  position: relative;
-}
-
-.score-ring-wrap {
-  position: relative; width: 200px; height: 200px;
-  margin: 0 auto 24px;
-}
-
-.score-ring-wrap svg { transform: rotate(-90deg); }
-
-.score-ring-bg { fill: none; stroke: var(--surface2); stroke-width: 8; }
-.score-ring-fill { fill: none; stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1.5s ease; }
-
-.score-number {
-  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  font-family: 'Cormorant Garamond', serif; font-size: 56px; font-weight: 300;
-}
-
-.score-label {
-  font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
-  color: var(--text2); margin-bottom: 4px;
-}
-
-.score-verdict {
-  font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 400;
-  margin-top: 4px;
-}
-
-/* Cards */
-.card-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
-  margin-bottom: 16px;
-}
-
-@media (max-width: 600px) { .card-grid { grid-template-columns: 1fr; } }
-
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 24px;
-  position: relative;
-  overflow: hidden;
-}
-
-.card-title {
-  font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
-  color: var(--text2); margin-bottom: 12px; font-weight: 500;
-}
-
-.card-number {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 44px; font-weight: 300; line-height: 1;
-  margin-bottom: 4px;
-}
-
-.card-planet {
-  font-size: 13px; color: var(--gold); margin-bottom: 8px;
-}
-
-.card-rate {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 12px; padding: 3px 10px;
-  border-radius: 4px; display: inline-block;
-}
-
-.rate-good { background: var(--green-glow); color: var(--green); }
-.rate-bad { background: var(--red-glow); color: var(--red); }
-.rate-mid { background: rgba(255,255,255,0.05); color: var(--text2); }
-
-/* DC Combo */
-.dc-section {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 28px;
-  margin-bottom: 16px;
-}
-
-.dc-combo-display {
-  display: flex; align-items: center; gap: 16px;
-  justify-content: center; margin: 16px 0;
-}
-
-.dc-num {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 52px; font-weight: 300;
-}
-
-.dc-sep {
-  font-size: 20px; color: var(--text2);
-}
-
-.dc-label {
-  font-size: 10px; letter-spacing: 1px; color: var(--text2);
-  text-transform: uppercase; text-align: center;
-}
-
-/* Name Analysis */
-.name-breakdown {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 28px;
-  margin-bottom: 16px;
-}
-
-.name-table {
-  width: 100%; border-collapse: collapse; margin-top: 16px;
-}
-
-.name-table th {
-  text-align: left; font-size: 10px; letter-spacing: 1.5px;
-  text-transform: uppercase; color: var(--text2); padding: 8px 12px;
-  border-bottom: 1px solid var(--border); font-weight: 500;
-}
-
-.name-table td {
-  padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.03);
-  font-size: 14px;
-}
-
-.name-table .mono {
-  font-family: 'JetBrains Mono', monospace; font-size: 13px;
-}
-
-/* Meter bar */
-.meter {
-  height: 6px; background: var(--surface2); border-radius: 3px;
-  overflow: hidden; width: 100px; display: inline-block; vertical-align: middle;
-  margin-left: 8px;
-}
-
-.meter-fill {
-  height: 100%; border-radius: 3px; transition: width 1s ease;
-}
-
-/* Recommendations */
-.reco-section {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 28px;
-  margin-bottom: 16px;
-}
-
-.reco-item {
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.03);
-  display: flex; gap: 12px; align-items: flex-start;
-}
-
-.reco-item:last-child { border: none; }
-
-.reco-icon {
-  width: 28px; height: 28px; border-radius: 6px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 14px; flex-shrink: 0; margin-top: 2px;
-}
-
-.reco-good { background: var(--green-glow); }
-.reco-warn { background: var(--red-glow); }
-.reco-info { background: var(--gold-glow); }
-
-.reco-text { font-size: 14px; line-height: 1.6; color: var(--text); }
-.reco-text strong { color: var(--gold); font-weight: 500; }
-
-/* Disclaimer */
-.disclaimer {
-  text-align: center; padding: 30px 20px;
-  font-size: 11px; color: #5a5666; line-height: 1.6;
-  border-top: 1px solid var(--border);
-  margin-top: 20px;
-}
-
-.disclaimer strong { color: var(--text2); }
-
-/* Name Suggest */
-.suggest-section {
-  background: linear-gradient(135deg, rgba(212,168,83,0.06), rgba(212,168,83,0.02));
-  border: 1px solid rgba(212,168,83,0.2);
-  border-radius: 12px;
-  padding: 28px;
-  margin-bottom: 16px;
-}
-
-.suggest-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-  gap: 8px; margin-top: 16px;
-}
-
-.suggest-chip {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 8px; text-align: center;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
-}
-
-.suggest-chip.best {
-  border-color: var(--gold);
-  background: var(--gold-glow);
-  color: var(--gold);
-}
-
-/* Name Correction Section */
-.correction-section {
-  background: linear-gradient(135deg, rgba(74,222,128,0.04), rgba(74,222,128,0.01));
-  border: 1px solid rgba(74,222,128,0.15);
-  border-radius: 12px;
-  padding: 28px;
-  margin-bottom: 16px;
-}
-
-.correction-header {
-  display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
-}
-
-.correction-header h3 {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 20px; font-weight: 400; color: var(--text);
-}
-
-.corr-table {
-  width: 100%; border-collapse: collapse;
-}
-
-.corr-table th {
-  text-align: left; font-size: 9px; letter-spacing: 1.5px;
-  text-transform: uppercase; color: var(--text2); padding: 8px 10px;
-  border-bottom: 1px solid var(--border); font-weight: 500;
-}
-
-.corr-table td {
-  padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.03);
-  font-size: 13px;
-}
-
-.corr-name {
-  font-weight: 500; color: var(--text);
-}
-
-.corr-change {
-  font-size: 11px; color: var(--text2); margin-top: 2px;
-  font-style: italic;
-}
-
-.corr-boost {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 12px; color: var(--green); font-weight: 500;
-}
-
-.corr-tag {
-  display: inline-block; padding: 2px 8px; border-radius: 3px;
-  font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
-  font-weight: 500;
-}
-
-.corr-tag-add { background: rgba(96,165,250,0.12); color: var(--blue); }
-.corr-tag-remove { background: rgba(232,84,84,0.12); color: var(--red); }
-.corr-tag-swap { background: rgba(167,139,250,0.12); color: var(--purple); }
-.corr-tag-double { background: rgba(212,168,83,0.12); color: var(--gold); }
-
-.corr-original {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 14px 18px;
-  margin-bottom: 16px;
-  display: flex; justify-content: space-between; align-items: center;
-}
-
-.corr-original-name {
-  font-size: 15px; font-weight: 500;
-}
-
-.corr-original-score {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px; color: var(--text2);
-}
-
-.corr-best-badge {
-  display: inline-block; padding: 2px 8px; border-radius: 3px;
-  font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
-  background: var(--green-glow); color: var(--green); font-weight: 600;
-  margin-left: 8px;
-}
-
-.corr-note {
-  margin-top: 16px; padding: 14px 18px;
-  background: rgba(212,168,83,0.06);
-  border: 1px solid rgba(212,168,83,0.12);
-  border-radius: 8px;
-  font-size: 12px; color: var(--text2); line-height: 1.7;
-}
-
-.corr-note strong { color: var(--gold); }
-
-.corr-letter-grid {
-  display: flex; gap: 3px; flex-wrap: wrap; margin: 8px 0;
-}
-
-.corr-letter {
-  width: 28px; height: 32px; display: flex; align-items: center; justify-content: center;
-  background: var(--surface2); border: 1px solid var(--border); border-radius: 4px;
-  font-family: 'JetBrains Mono', monospace; font-size: 14px;
-}
-
-.corr-letter.added {
-  border-color: var(--green); background: var(--green-glow); color: var(--green);
-}
-
-.corr-letter.removed {
-  border-color: var(--red); background: var(--red-glow); color: var(--red);
-  text-decoration: line-through;
-}
-
-.corr-letter.changed {
-  border-color: var(--purple); background: rgba(167,139,250,0.12); color: var(--purple);
-}
+:root{--bg:#0a0a0f;--s1:#12121a;--s2:#1a1a26;--bd:#2a2a3a;--tx:#e8e6e3;--t2:#9a96a0;--gd:#d4a853;--g2:#b8912f;--gg:rgba(212,168,83,.15);--rd:#e85454;--rg:rgba(232,84,84,.12);--gn:#4ade80;--gng:rgba(74,222,128,.12);--bl:#60a5fa;--pu:#a78bfa}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--tx);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
+.noise{position:fixed;top:0;left:0;width:100%;height:100%;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:9999}
+.ctr{max-width:900px;margin:0 auto;padding:20px}
+header{text-align:center;padding:50px 20px 30px;position:relative}
+header::before{content:'';position:absolute;top:20px;left:50%;transform:translateX(-50%);width:120px;height:1px;background:linear-gradient(90deg,transparent,var(--gd),transparent)}
+.logo{font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:300;letter-spacing:8px;color:var(--gd);text-transform:uppercase;margin-bottom:8px}
+.tagline{font-size:12px;letter-spacing:4px;text-transform:uppercase;color:var(--t2);font-weight:300}
+.badge{display:inline-block;margin-top:14px;padding:4px 14px;border:1px solid var(--bd);border-radius:20px;font-size:10px;letter-spacing:2px;color:var(--t2);text-transform:uppercase}
+.ibox{background:var(--s1);border:1px solid var(--bd);border-radius:16px;padding:36px;margin:30px 0;position:relative;overflow:hidden}
+.ibox::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--g2),transparent)}
+.igrid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:600px){.igrid{grid-template-columns:1fr}}
+.fld{display:flex;flex-direction:column;gap:6px}
+.fld label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--t2);font-weight:500}
+.fld input{background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:14px 16px;color:var(--tx);font-family:'DM Sans',sans-serif;font-size:15px;outline:none;transition:border-color .3s}
+.fld input:focus{border-color:var(--gd)}
+.fld input::placeholder{color:#4a4656}
+.full{grid-column:1/-1}
+.btn{grid-column:1/-1;background:linear-gradient(135deg,var(--g2),var(--gd));border:none;border-radius:8px;padding:16px;color:#0a0a0f;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:all .3s;margin-top:8px}
+.btn:hover{transform:translateY(-1px);box-shadow:0 8px 30px rgba(212,168,83,.25)}
+#results{display:none}
+#results.active{display:block;animation:fadeUp .6s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.sec{background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:28px;margin-bottom:16px;position:relative;overflow:hidden}
+.stit{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--t2);margin-bottom:16px;font-weight:500}
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:600px){.cgrid{grid-template-columns:1fr}}
+.cnum{font-family:'Cormorant Garamond',serif;font-size:44px;font-weight:300;line-height:1;margin-bottom:4px}
+.cpl{font-size:13px;color:var(--gd);margin-bottom:8px}
+.rate{font-family:'JetBrains Mono',monospace;font-size:12px;padding:3px 10px;border-radius:4px;display:inline-block}
+.rg{background:var(--gng);color:var(--gn)}.rb{background:var(--rg);color:var(--rd)}.rm{background:rgba(255,255,255,.05);color:var(--t2)}
+.meter{height:6px;background:var(--s2);border-radius:3px;overflow:hidden;width:100px;display:inline-block;vertical-align:middle;margin-left:8px}
+.mf{height:100%;border-radius:3px;transition:width 1s ease}
+.score-hero{text-align:center;padding:40px 20px}
+.score-ring{position:relative;width:200px;height:200px;margin:0 auto 24px}
+.score-ring svg{transform:rotate(-90deg)}
+.sn{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Cormorant Garamond',serif;font-size:56px;font-weight:300}
+.sl{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--t2);margin-bottom:4px}
+.sv{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;margin-top:4px}
+table.dt{width:100%;border-collapse:collapse;margin-top:12px}
+.dt th{text-align:left;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--t2);padding:8px 10px;border-bottom:1px solid var(--bd);font-weight:500}
+.dt td{padding:10px;border-bottom:1px solid rgba(255,255,255,.03);font-size:13px}
+.mono{font-family:'JetBrains Mono',monospace;font-size:13px}
+.ri{padding:12px 0;border-bottom:1px solid rgba(255,255,255,.03);display:flex;gap:12px;align-items:flex-start}
+.ri:last-child{border:none}
+.ric{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:2px}
+.ric-g{background:var(--gng)}.ric-w{background:var(--rg)}.ric-i{background:var(--gg)}
+.rit{font-size:14px;line-height:1.6;color:var(--tx)}
+.rit strong{color:var(--gd);font-weight:500}
+.tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.tab{padding:8px 16px;border:1px solid var(--bd);border-radius:6px;font-size:12px;letter-spacing:1px;cursor:pointer;background:transparent;color:var(--t2);transition:all .2s;text-transform:uppercase}
+.tab.active{background:var(--gg);border-color:var(--gd);color:var(--gd)}
+.tpanel{display:none}.tpanel.active{display:block}
+.csec{background:linear-gradient(135deg,rgba(74,222,128,.04),rgba(74,222,128,.01));border:1px solid rgba(74,222,128,.15);border-radius:12px;padding:28px;margin-bottom:16px}
+.ctbl{width:100%;border-collapse:collapse;margin-top:12px}
+.ctbl th{text-align:left;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--t2);padding:8px 10px;border-bottom:1px solid var(--bd);font-weight:500}
+.ctbl td{padding:10px;border-bottom:1px solid rgba(255,255,255,.03);font-size:13px}
+.cbst{display:inline-block;padding:2px 8px;border-radius:3px;font-size:9px;letter-spacing:1px;text-transform:uppercase;background:var(--gng);color:var(--gn);font-weight:600;margin-left:8px}
+.ctg{display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;letter-spacing:1px;text-transform:uppercase;font-weight:500}
+.ctg-a{background:rgba(96,165,250,.12);color:var(--bl)}.ctg-r{background:var(--rg);color:var(--rd)}.ctg-s{background:rgba(167,139,250,.12);color:var(--pu)}.ctg-d{background:var(--gg);color:var(--gd)}
+.boost{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gn);font-weight:500}
+.cnote{margin-top:16px;padding:14px 18px;background:rgba(212,168,83,.06);border:1px solid rgba(212,168,83,.12);border-radius:8px;font-size:12px;color:var(--t2);line-height:1.7}
+.cnote strong{color:var(--gd)}
+.pill{display:inline-block;padding:4px 10px;border-radius:4px;font-size:11px;margin:3px;background:var(--s2);border:1px solid var(--bd)}
+.pill-g{border-color:rgba(74,222,128,.3);color:var(--gn)}
+.pill-r{border-color:rgba(232,84,84,.3);color:var(--rd)}
+.pill-b{border-color:rgba(96,165,250,.3);color:var(--bl)}
+.disclaimer{text-align:center;padding:30px 20px;font-size:11px;color:#5a5666;line-height:1.6;border-top:1px solid var(--bd);margin-top:20px}
+.disclaimer strong{color:var(--t2)}
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+@media(max-width:600px){.profile-grid{grid-template-columns:1fr}}
+.profile-item{padding:12px;background:var(--s2);border-radius:8px}
+.profile-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--t2);margin-bottom:6px}
+.profile-value{font-size:13px;line-height:1.5}
 </style>
 </head>
 <body>
 <div class="noise"></div>
-<div class="container">
-  <header>
-    <div class="logo">NumeroVeda</div>
-    <div class="tagline">Chaldean Numerology Engine</div>
-    <div class="badge">Validated against 257 real people</div>
-  </header>
+<div class="ctr">
+<header>
+<div class="logo">NumeroVeda</div>
+<div class="tagline">Deep Chaldean Numerology Engine</div>
+<div class="badge">251 people validated · AI pattern discovery · Traditional + Data-backed</div>
+</header>
+<div class="ibox">
+<div class="igrid">
+<div class="fld"><label>Name (as commonly known)</label><input type="text" id="nameIn" placeholder="e.g. Virat Kohli"></div>
+<div class="fld"><label>Date of Birth</label><input type="date" id="dobIn"></div>
+<button class="btn" onclick="analyze()">Reveal Your Complete Numerology</button>
+</div>
+</div>
+<div id="results"></div>
+</div>
+<script>
+const CH={A:1,B:2,C:3,D:4,E:5,F:8,G:3,H:5,I:1,J:1,K:2,L:3,M:4,N:5,O:7,P:8,Q:1,R:2,S:3,T:4,U:6,V:6,W:6,X:5,Y:1,Z:7};
+const VW=new Set('AEIOU');
+const PL={1:'Sun ☀️',2:'Moon 🌙',3:'Jupiter ♃',4:'Rahu ☊',5:'Mercury ☿',6:'Venus ♀',7:'Ketu ☋',8:'Saturn ♄',9:'Mars ♂'};
+const DR={1:69,2:57,3:65,4:73,5:78,6:67,7:52,8:60,9:52};
+const CR={1:71,2:52,3:52,4:75,5:70,6:78,7:73,8:65,9:46};
+const NR={1:72,2:56,3:61,4:70,5:69,6:53,7:65,8:73,9:66};
+const SR={1:65,2:67,3:70,4:63,5:50,6:58,7:63,8:78,9:72};
+const PR={1:46,2:67,3:55,4:73,5:77,6:60,7:75,8:59,9:71};
+const DNR={1:{1:50,3:66,4:75,5:75,6:50,7:100,8:66,9:60},2:{1:50,3:33,4:33,6:75,7:60,8:66},3:{1:100,3:25,5:71,6:50,7:60,8:100,9:25},4:{3:66,4:75,6:50,7:75,8:100},5:{1:100,3:66,4:66,7:50,9:100},6:{1:80,3:80,4:50,5:66,7:100,8:50,9:75},7:{1:66,3:100,4:50,5:33,6:0,7:0},8:{3:33,4:50,5:100,6:100,7:66,8:66,9:50},9:{1:50,3:33,4:50,5:0,6:66,7:50,8:100}};
+const CNR={1:{1:75,3:33,4:50,5:66,6:50,8:100,9:66},2:{1:50,3:42,4:50,8:80},3:{1:60,3:42,4:50,5:50,7:0,8:50,9:100},4:{1:100,3:80,4:100,5:75,6:66,7:100,8:75},5:{1:80,3:33,4:0,5:75,6:100,7:60,8:66,9:50},6:{1:100,3:50,4:100,5:66,6:33,7:100,9:50},7:{3:100,4:100,5:60,6:50,7:75,8:80,9:66},8:{1:75,3:66,4:33,5:75,6:75,7:66,8:100,9:50},9:{1:33,3:66,6:0,7:60,8:0,9:100}};
+const PF={1:new Set([1,2,3,5,9]),2:new Set([1,2,3,5]),3:new Set([1,2,3,5,7,9]),4:new Set([5,6,7,8]),5:new Set([1,2,3,4,5,6,7,8,9]),6:new Set([4,5,6,7,8]),7:new Set([3,4,5,6,8]),8:new Set([4,5,6,7]),9:new Set([1,2,3,5,9])};
+const PE={1:new Set([6,8]),2:new Set([4,8,9]),3:new Set([6]),4:new Set([1,2,9]),5:new Set(),6:new Set([1,2,3,9]),7:new Set([1,2,9]),8:new Set([1,2,9]),9:new Set([4,6,7,8])};
+const NP={1:{planet:'Sun',elem:'Fire',day:'Sunday',colors:['Gold','Orange','Yellow'],gems:['Ruby','Garnet'],str:['Leadership','Originality','Ambition','Self-confidence'],wk:['Ego','Dominating','Stubborn','Impatient'],careers:['CEO/Founder','Politics','Creative Director'],mantras:['Om Suryaya Namaha'],remedies:['Offer water to Sun at sunrise','Wear gold ring on ring finger','Donate wheat on Sundays']},2:{planet:'Moon',elem:'Water',day:'Monday',colors:['White','Silver','Light blue'],gems:['Pearl','Moonstone'],str:['Intuitive','Diplomatic','Nurturing','Empathetic'],wk:['Indecisive','Over-sensitive','Moody','Dependent'],careers:['Counselor','Diplomat','Healthcare','Artist'],mantras:['Om Chandraya Namaha'],remedies:['Drink moon-charged water','Wear pearl on little finger','Donate rice on Mondays']},3:{planet:'Jupiter',elem:'Ether',day:'Thursday',colors:['Yellow','Saffron','Gold'],gems:['Yellow Sapphire','Topaz'],str:['Wisdom','Optimism','Creative','Charismatic'],wk:['Scattered','Overconfident','Extravagant','Procrastinating'],careers:['Teacher','Writer','Banker','Judge'],mantras:['Om Gurave Namaha'],remedies:['Wear yellow on Thursdays','Donate turmeric','Respect elders and teachers']},4:{planet:'Rahu',elem:'Air',day:'Saturday',colors:['Blue','Grey','Electric blue'],gems:['Hessonite (Gomed)'],str:['Disciplined','Innovative','Hardworking','Detail-oriented'],wk:['Rigid','Anxious','Sudden upheavals','Rebellious'],careers:['Engineer','IT/Tech','Research','Architecture'],mantras:['Om Rahave Namaha'],remedies:['Read Hanuman Chalisa daily','Donate black sesame seeds','Keep sandalwood']},5:{planet:'Mercury',elem:'Earth',day:'Wednesday',colors:['Green','Turquoise','Mixed colors'],gems:['Emerald','Peridot'],str:['Versatile','Communicative','Quick-witted','Adaptable','Universal friend'],wk:['Restless','Inconsistent','Risk-taking','Scattered'],careers:['Business','Media','Trading','Sales','Marketing'],mantras:['Om Budhaya Namaha'],remedies:['Wear green on Wednesdays','Donate green moong dal','Feed birds']},6:{planet:'Venus',elem:'Water',day:'Friday',colors:['White','Pink','Pastels'],gems:['Diamond','White Sapphire','Opal'],str:['Artistic','Loving','Magnetic','Harmonious'],wk:['Possessive','Lazy','Materialistic','Jealous'],careers:['Fashion','Entertainment','Luxury goods','Design'],mantras:['Om Shukraya Namaha'],remedies:['Wear white on Fridays','Donate white sweets','Respect women and artists']},7:{planet:'Ketu',elem:'Water',day:'Monday',colors:['Grey','Smoky','Dark green'],gems:["Cat's Eye","Tiger Eye"],str:['Spiritual','Mystical','Research-minded','Intuitive'],wk:['Isolated','Confused','Detached','Unpredictable'],careers:['Research','Spirituality','Technology','Psychology'],mantras:['Om Ketave Namaha','Om Namah Shivaya'],remedies:['Meditate regularly','Donate multi-colored blanket','Keep a dog as pet']},8:{planet:'Saturn',elem:'Air',day:'Saturday',colors:['Black','Dark blue','Indigo'],gems:['Blue Sapphire','Amethyst'],str:['Ambitious','Authoritative','Patient','Strategic'],wk:['Delayed success','Lonely','Pessimistic','Workaholic'],careers:['Law','Real estate','Government','Mining'],mantras:['Om Shani Devaya Namaha'],remedies:['Donate mustard oil on Saturdays','Feed crows','Help elderly and disabled']},9:{planet:'Mars',elem:'Fire',day:'Tuesday',colors:['Red','Scarlet','Coral'],gems:['Red Coral','Carnelian'],str:['Courageous','Humanitarian','Energetic','Protective'],wk:['Aggressive','Impulsive','Short-tempered','Confrontational'],careers:['Military','Surgery','Sports','Police'],mantras:['Om Mangalaya Namaha'],remedies:['Offer red flowers at Hanuman temple on Tuesdays','Donate red masoor dal','Practice patience']}};
+const CM={10:{n:'Wheel of Fortune',t:'lucky',r:7},11:{n:'Clenched Hand',t:'karmic',r:3},12:{n:'The Sacrifice',t:'unlucky',r:3},13:{n:'Transformation',t:'mixed',r:5},14:{n:'Lucky Money',t:'mixed',r:6},15:{n:'The Magician',t:'lucky',r:8},16:{n:'Shattered Citadel',t:'danger',r:2},17:{n:'Star of the Magi',t:'v_lucky',r:9},18:{n:'Spiritual Warfare',t:'danger',r:2},19:{n:'Prince of Heaven',t:'v_lucky',r:10},20:{n:'Judgment/Delays',t:'unlucky',r:4},21:{n:'Crown of the Magi',t:'v_lucky',r:9},22:{n:'Illusion/Danger',t:'unlucky',r:3},23:{n:'Royal Star of Lion',t:'v_lucky',r:10},24:{n:'Love & Money',t:'lucky',r:8},25:{n:'Strength via Trial',t:'mixed',r:5},26:{n:'Grave Warning',t:'unlucky',r:3},27:{n:'The Scepter',t:'lucky',r:7},28:{n:'Promise then Loss',t:'mixed',r:4},29:{n:'Treachery',t:'danger',r:2},30:{n:'Loner Intellectual',t:'neutral',r:5},31:{n:'Isolation',t:'mixed',r:4},32:{n:'Trust Yourself',t:'lucky',r:7},33:{n:'Master Teacher',t:'lucky',r:8},34:{n:'Late Bloomer',t:'mixed',r:5},35:{n:'Mistrust',t:'mixed',r:4},36:{n:'Genius/Charisma',t:'lucky',r:7},37:{n:'Royal Star of Bull',t:'v_lucky',r:9},38:{n:'Hidden Danger',t:'unlucky',r:3},39:{n:'Protection',t:'mixed',r:5},40:{n:'Power Change',t:'mixed',r:5},41:{n:'Self Trust',t:'lucky',r:7},42:{n:'Weaker 24',t:'mixed',r:5},43:{n:'Revolution/Failure',t:'danger',r:2},44:{n:'Karmic Penalty',t:'unlucky',r:3},45:{n:'Power & Authority',t:'lucky',r:8},46:{n:'Love & Friendship',t:'lucky',r:7},47:{n:'Deception',t:'unlucky',r:3},48:{n:'Karmic Lesson',t:'neutral',r:4},49:{n:'Isolation',t:'unlucky',r:3},50:{n:'Self-Directed',t:'mixed',r:5},51:{n:'The Warrior',t:'mixed',r:6},52:{n:'Most Unfortunate',t:'danger',r:1}};
+const MM={1:'Missing Sun energy: May lack self-confidence and leadership initiative.',2:'Missing Moon energy: May struggle with emotional expression and intuition.',3:'Missing Jupiter energy: May lack wisdom channels and guidance from mentors.',4:'Missing Rahu energy: May lack innovation and ability to think outside the box.',5:'Missing Mercury energy: May struggle with communication and adaptability.',6:'Missing Venus energy: May lack artistic fulfillment and relationship harmony.',7:'Missing Ketu energy: May lack spiritual depth and research abilities.',8:'Missing Saturn energy: May lack discipline, structure, and long-term planning.'};
 
-  <div class="input-section">
-    <div class="input-grid">
-      <div class="field">
-        <label>Name (as commonly known)</label>
-        <input type="text" id="nameInput" placeholder="e.g. Virat Kohli">
-      </div>
-      <div class="field">
-        <label>Date of Birth</label>
-        <input type="date" id="dobInput">
-      </div>
-      <div class="field field-full" id="firstNameField" style="display:none">
-        <label>First Name (if different from above)</label>
-        <input type="text" id="firstNameInput" placeholder="Optional — if commonly known by surname only">
-      </div>
-      <button class="btn" onclick="analyze()">Reveal Your Numbers</button>
-    </div>
-  </div>
+function rs(t){while(t>9)t=[...String(t)].reduce((a,b)=>a+parseInt(b),0);return t}
+function cn(name){const c=name.toUpperCase().replace(/[^A-Z]/g,'');let t=0,v=0;for(const l of c){const n=CH[l]||0;t+=n;if(VW.has(l))v+=n}return{total:t,root:rs(t),soul:rs(v),pers:rs(t-v),letters:c}}
+function drv(d){let n=d;while(n>9)n=rs(n);return n}
+function cnd(d,m,y){return rs([...`${d}${m}${y}`].reduce((a,b)=>a+parseInt(b),0))}
+function missing(name){const c=name.toUpperCase().replace(/[^A-Z]/g,'');const p=new Set();for(const l of c)if(CH[l])p.add(CH[l]);const m=[];for(let i=1;i<=8;i++)if(!p.has(i))m.push(i);return m}
+function rc(r){return r>=70?'rg':r<=45?'rb':'rm'}
+function rl(r){return r>=75?'Strong':r>=65?'Good':r>=55?'Average':r>=45?'Weak':'Caution'}
+function mc(r){return r>=70?'var(--gn)':r>=55?'var(--gd)':'var(--rd)'}
+function compColor(t){return t==='v_lucky'||t==='lucky'?'var(--gn)':t==='danger'||t==='unlucky'?'var(--rd)':'var(--t2)'}
 
-  <div class="results" id="results"></div>
+function nameScoreDOB(name,d,c){
+const n=cn(name);const nr=n.root,ns=n.soul,np=n.pers;
+const gl=(NR[nr]||60)+(SR[ns]||60)+(PR[np]||60);
+let dr=(DNR[d]||{})[nr],cr=(CNR[c]||{})[nr];
+let rsc=NR[nr]||60,cnt=1;
+if(dr!==undefined){rsc+=dr*1.5;cnt+=1.5}
+if(cr!==undefined){rsc+=cr*1.5;cnt+=1.5}
+rsc/=cnt;
+const sc=(rsc+(SR[ns]||60)+(PR[np]||60))/3;
+const sf=PF[ns]&&PF[ns].has(d);
+return{score:sc+(sf?3:0),root:nr,soul:ns,pers:np,compound:n.total,drvH:dr,cndH:cr,soulFriend:sf}
+}
+
+function genCorrections(name,d,c){
+const orig=nameScoreDOB(name,d,c);const S=new Map();const parts=name.trim().split(/\s+/);
+function tryC(cand,method,tag){
+if(cand===name.trim()||cand.replace(/\s+/g,'').length<3)return;
+const data=nameScoreDOB(cand,d,c);
+if(data.score>orig.score+0.5&&!S.has(cand))S.set(cand,{...data,method,tag});
+}
+const SIM={C:['K','S'],K:['C','Q'],S:['Z','C'],Z:['S'],V:['W'],W:['V'],I:['Y','EE'],Y:['I'],J:['G'],G:['J'],T:['TH','D'],D:['T'],F:['PH'],N:['NN'],A:['AA'],E:['EE','I'],R:['RR'],L:['LL']};
+for(let pi=0;pi<parts.length;pi++){
+const p=parts[pi];const mk=np=>{const a=[...parts];a[pi]=np;return a.join(' ')};
+for(const ch of 'aehisn')tryC(mk(p+ch),`Add "${ch}" after ${p}`,'add');
+for(let i=0;i<p.length;i++){
+if(!VW.has(p[i].toUpperCase())&&/[a-zA-Z]/.test(p[i]))tryC(mk(p.slice(0,i+1)+p[i]+p.slice(i+1)),`Double "${p[i]}"`,'dbl');
+if(VW.has(p[i].toUpperCase()))tryC(mk(p.slice(0,i+1)+p[i]+p.slice(i+1)),`Double "${p[i]}"`,'dbl');
+}
+if(p.length>=4)for(let i=0;i<p.length;i++){const nw=p.slice(0,i)+p.slice(i+1);if(nw.length>=3)tryC(mk(nw),`Remove "${p[i]}"`,'rem')}
+for(let i=1;i<p.length;i++)for(const ch of 'aheiou')tryC(mk(p.slice(0,i)+ch+p.slice(i)),`Insert "${ch}" in ${p}`,'add');
+for(let i=0;i<p.length;i++){const u=p[i].toUpperCase();if(SIM[u])for(const rep of SIM[u]){const f=i===0?rep[0].toUpperCase()+rep.slice(1).toLowerCase():rep.toLowerCase();tryC(mk(p.slice(0,i)+f+p.slice(i+1)),`"${p[i]}"→"${f}"`,'swp')}}
+}
+let sorted=[...S.entries()].sort((a,b)=>b[1].score-a[1].score);
+const seen=new Set();const uniq=[];
+for(const[n,d2]of sorted){const k=`${d2.root}-${d2.soul}-${d2.pers}`;if(!seen.has(k)){seen.add(k);uniq.push([n,d2])}if(uniq.length>=8)break}
+return{suggestions:uniq,original:orig}
+}
+
+function analyze(){
+const name=document.getElementById('nameIn').value.trim();
+const dobEl=document.getElementById('dobIn');
+if(!name||!dobEl.value){alert('Please enter both name and date of birth');return}
+const[year,month,day]=[...dobEl.value.split('-').map(Number)];
+const d=drv(day),c=cnd(day,month,year),n=cn(name),miss=missing(name);
+const dR=DR[d]||60,cR=CR[c]||60,nrR=NR[n.root]||60,sR=SR[n.soul]||60,pR=PR[n.pers]||60;
+const dp=NP[d],cp=NP[c],nrp=NP[n.root],sp=NP[n.soul],pp=NP[n.pers];
+const sf=PF[n.soul]&&PF[n.soul].has(d);
+const dcCombo=`${d}-${c}`;
+// Compound
+let comp=n.total;while(comp>52)comp=rs(comp);
+const compInfo=CM[comp]||{n:'—',t:'neutral',r:5};
+// Score
+const origS=nameScoreDOB(name,d,c);
+const scores=[dR,cR,origS.score];
+const composite=Math.round(scores.reduce((a,b)=>a+b,0)/scores.length);
+const verdict=composite>=70?{t:'Exceptional Alignment',c:'var(--gn)'}:composite>=62?{t:'Strong Vibration',c:'var(--gn)'}:composite>=55?{t:'Favorable Energy',c:'var(--gd)'}:composite>=48?{t:'Mixed Signals',c:'var(--t2)'}:{t:'Challenging Pattern',c:'var(--rd)'};
+const ringPct=Math.min(100,Math.max(0,(composite-20)*1.25));
+const circ=2*Math.PI*88;const dash=circ*(1-ringPct/100);
+// Corrections
+const{suggestions:corr,original:corrOrig}=genCorrections(name,d,c);
+// Best roots for this DOB
+const bestRoots=[];for(let i=1;i<=9;i++){let sc=NR[i]||60,cnt=1;const dr2=(DNR[d]||{})[i],cr2=(CNR[c]||{})[i];if(dr2!==undefined){sc+=dr2*1.5;cnt+=1.5}if(cr2!==undefined){sc+=cr2*1.5;cnt+=1.5}bestRoots.push({r:i,rate:Math.round(sc/cnt)})}
+bestRoots.sort((a,b)=>b.rate-a.rate);
+// Build insights
+const insights=[];
+if(dR>=70)insights.push({t:'g',m:`<strong>Driver ${d} (${PL[d]})</strong> is one of the strongest — ${dR}% success rate. Natural leadership and drive.`});
+else if(dR<=55)insights.push({t:'w',m:`<strong>Driver ${d} (${PL[d]})</strong> showed only ${dR}% correlation. ${dp?'Remedy: '+dp.remedies[0]:''}`});
+if(cR>=70)insights.push({t:'g',m:`<strong>Conductor ${c} (${PL[c]})</strong> is excellent — ${cR}% success rate. Your life path carries strong energy.`});
+else if(cR<=52)insights.push({t:'w',m:`<strong>Conductor ${c} (${PL[c]})</strong> is one of the most challenging life paths (${cR}%). ${cp?'Remedy: '+cp.remedies[0]:''}`});
+if(sR>=70)insights.push({t:'g',m:`<strong>Soul Urge ${n.soul} (${PL[n.soul]})</strong> = ${sR}% — your inner desires resonate powerfully.`});
+else if(sR<=55)insights.push({t:'w',m:`<strong>Soul Urge ${n.soul}</strong> showed only ${sR}% — inner motivation may face friction. Consider name changes to shift vowel energy.`});
+if(pR>=70)insights.push({t:'g',m:`<strong>Personality ${n.pers} (${PL[n.pers]})</strong> = ${pR}% — how others perceive you works strongly in your favor.`});
+else if(pR<=50)insights.push({t:'w',m:`<strong>Personality ${n.pers}</strong> only ${pR}% — the outer impression your name creates faces friction.`});
+if(sf)insights.push({t:'g',m:`<strong>Soul↔Driver harmony</strong>: Your Soul Urge ${n.soul} is a planetary friend of your Driver ${d}. This is the ONE validated relationship that matters (+11% gap in 251-person data).`});
+else if(PE[n.soul]&&PE[n.soul].has(d))insights.push({t:'w',m:`<strong>Soul↔Driver conflict</strong>: Your Soul ${n.soul} is a planetary enemy of Driver ${d}. Your inner desires may clash with your natural personality.`});
+if(miss.length>0)insights.push({t:'i',m:`<strong>Missing energies in name</strong>: Numbers ${miss.join(', ')} are absent from your name letters. ${miss.length>=3?'Multiple missing energies suggest areas for conscious development.':'Consider if these gaps affect you.'}`});
+
+const html=`
+<div class="sec score-hero">
+<div class="sl">Composite Score — validated against 251 real people</div>
+<div class="score-ring"><svg width="200" height="200" viewBox="0 0 200 200"><circle fill="none" stroke="var(--s2)" stroke-width="8" cx="100" cy="100" r="88"/><circle fill="none" stroke="${verdict.c}" stroke-width="8" stroke-linecap="round" cx="100" cy="100" r="88" stroke-dasharray="${circ}" stroke-dashoffset="${dash}"/></svg><div class="sn" style="color:${verdict.c}">${composite}</div></div>
+<div class="sv" style="color:${verdict.c}">${verdict.t}</div>
+<div style="margin-top:8px;font-size:12px;color:var(--t2)">Driver (${dR}%) + Conductor (${cR}%) + Name Analysis (${Math.round(origS.score)}%)</div>
 </div>
 
-<script>
-const CHALDEAN = {A:1,B:2,C:3,D:4,E:5,F:8,G:3,H:5,I:1,J:1,K:2,L:3,M:4,N:5,O:7,P:8,Q:1,R:2,S:3,T:4,U:6,V:6,W:6,X:5,Y:1,Z:7};
-const VOWELS = new Set('AEIOU');
-const PLANETS = {1:'Sun ☀️',2:'Moon 🌙',3:'Jupiter ♃',4:'Rahu ☊',5:'Mercury ☿',6:'Venus ♀',7:'Ketu ☋',8:'Saturn ♄',9:'Mars ♂'};
+<div class="tabs" id="tabs">
+<div class="tab active" onclick="showTab(0)">Core Numbers</div>
+<div class="tab" onclick="showTab(1)">Deep Profile</div>
+<div class="tab" onclick="showTab(2)">Name Analysis</div>
+<div class="tab" onclick="showTab(3)">Name Correction</div>
+<div class="tab" onclick="showTab(4)">Insights & Remedies</div>
+</div>
 
-// SUCCESS RATES — validated against 257 people
-const DRIVER_RATES = {1:66,2:50,3:64,4:68,5:78,6:68,7:52,8:58,9:55};
-const CONDUCTOR_RATES = {1:72,2:52,3:50,4:75,5:61,6:73,7:70,8:65,9:46};
-const NAME_ROOT_RATES = {1:73,2:60,3:56,4:59,5:69,6:54,7:64,8:72,9:61};
-const SOUL_RATES = {1:64,2:77,3:66,4:59,5:47,6:58,7:65,8:76,9:72};
-const PERS_RATES = {1:45,2:63,3:47,4:68,5:70,6:57,7:71,8:59,9:72};
+<div class="tpanel active" id="tp0">
+<div class="cgrid">
+<div class="sec"><div class="stit">Driver (Psychic) Number</div><div class="cnum">${d}</div><div class="cpl">${PL[d]}</div><span class="rate ${rc(dR)}">${dR}% — ${rl(dR)}</span><div class="meter"><div class="mf" style="width:${dR}%;background:${mc(dR)}"></div></div><div style="margin-top:8px;font-size:12px;color:var(--t2)">Born on ${day}${[,'st','nd','rd'][day%10>3?0:day%10]||'th'} · Your personality core</div></div>
+<div class="sec"><div class="stit">Conductor (Destiny) Number</div><div class="cnum">${c}</div><div class="cpl">${PL[c]}</div><span class="rate ${rc(cR)}">${cR}% — ${rl(cR)}</span><div class="meter"><div class="mf" style="width:${cR}%;background:${mc(cR)}"></div></div><div style="margin-top:8px;font-size:12px;color:var(--t2)">Full DOB sum · Your life path</div></div>
+</div>
+<div class="sec"><div class="stit">Compound Number — "${name}" = ${n.total}</div>
+<div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap">
+<div class="cnum" style="color:${compColor(compInfo.t)}">${comp<=52?comp:n.total}</div>
+<div><div style="font-size:16px;color:${compColor(compInfo.t)};font-family:'Cormorant Garamond',serif">"${compInfo.n}"</div>
+<div style="font-size:12px;color:var(--t2);margin-top:4px">Traditional rating: ${compInfo.r}/10 · ${compInfo.t.replace('_',' ').replace('v ','very ')}</div>
+<div style="font-size:11px;color:var(--t2);margin-top:4px;font-style:italic">⚠️ Note: Compound meanings are traditional lore. Our 251-person data showed NO predictive correlation for compound ratings. Shown for cultural reference only.</div>
+</div></div></div>
+</div>
 
-// DOB-SPECIFIC: Which name roots work best for each Driver/Conductor
-// Extracted from 257-person cross-tabulation
-const DRV_NR_RATES = {
-  1:{1:50,3:66,4:75,5:75,6:50,7:100,8:66,9:60},
-  2:{1:50,3:33,4:33,6:75,7:60,8:66},
-  3:{1:100,3:25,5:71,6:50,7:60,8:100,9:25},
-  4:{3:66,4:75,6:50,7:75,8:100},
-  5:{1:100,3:66,4:66,7:50,9:100},
-  6:{1:80,3:80,4:50,5:66,7:100,8:50,9:75},
-  7:{1:66,3:100,4:50,5:33,6:0,7:0},
-  8:{3:33,4:50,5:100,6:100,7:66,8:66,9:50},
-  9:{1:50,3:33,4:50,5:0,6:66,7:50,8:100}
-};
+<div class="tpanel" id="tp1">
+<div class="cgrid">
+<div class="sec"><div class="stit">Driver ${d} — ${dp.planet} Profile</div>
+<div class="profile-grid">
+<div class="profile-item"><div class="profile-label">Element / Day</div><div class="profile-value">${dp.elem} · ${dp.day}</div></div>
+<div class="profile-item"><div class="profile-label">Colors</div><div class="profile-value">${dp.colors.join(', ')}</div></div>
+<div class="profile-item"><div class="profile-label">Gemstones</div><div class="profile-value">${dp.gems.join(', ')}</div></div>
+<div class="profile-item"><div class="profile-label">Best Careers</div><div class="profile-value">${dp.careers.join(', ')}</div></div>
+</div>
+<div style="margin-top:12px"><div class="profile-label">Strengths</div>${dp.str.map(s=>`<span class="pill pill-g">${s}</span>`).join('')}</div>
+<div style="margin-top:8px"><div class="profile-label">Weaknesses</div>${dp.wk.map(s=>`<span class="pill pill-r">${s}</span>`).join('')}</div>
+</div>
+<div class="sec"><div class="stit">Conductor ${c} — ${cp.planet} Profile</div>
+<div class="profile-grid">
+<div class="profile-item"><div class="profile-label">Element / Day</div><div class="profile-value">${cp.elem} · ${cp.day}</div></div>
+<div class="profile-item"><div class="profile-label">Colors</div><div class="profile-value">${cp.colors.join(', ')}</div></div>
+<div class="profile-item"><div class="profile-label">Gemstones</div><div class="profile-value">${cp.gems.join(', ')}</div></div>
+<div class="profile-item"><div class="profile-label">Best Careers</div><div class="profile-value">${cp.careers.join(', ')}</div></div>
+</div>
+<div style="margin-top:12px"><div class="profile-label">Strengths</div>${cp.str.map(s=>`<span class="pill pill-g">${s}</span>`).join('')}</div>
+<div style="margin-top:8px"><div class="profile-label">Weaknesses</div>${cp.wk.map(s=>`<span class="pill pill-r">${s}</span>`).join('')}</div>
+</div></div>
+${miss.length?`<div class="sec"><div class="stit">Missing Number Energies in Your Name</div>${miss.map(m=>`<div class="ri"><div class="ric ric-w">!</div><div class="rit"><strong>Missing ${m} (${PL[m]})</strong>: ${MM[m]}</div></div>`).join('')}<div class="cnote"><strong>Traditional remedy:</strong> Add missing energies through gemstones, colors, or mantras. Missing numbers don't doom you — they highlight areas for conscious growth.</div></div>`:''}
+</div>
 
-const CND_NR_RATES = {
-  1:{1:75,3:33,4:50,5:66,6:50,8:100,9:66},
-  2:{1:50,3:42,4:50,8:80},
-  3:{1:60,3:42,4:50,5:50,7:0,8:50,9:100},
-  4:{1:100,3:80,4:100,5:75,6:66,7:100,8:75},
-  5:{1:80,3:33,4:0,5:75,6:100,7:60,8:66,9:50},
-  6:{1:100,3:50,4:100,5:66,6:33,7:100,9:50},
-  7:{3:100,4:100,5:60,6:50,7:75,8:80,9:66},
-  8:{1:75,3:66,4:33,5:75,6:75,7:66,8:100,9:50},
-  9:{1:33,3:66,6:0,7:60,8:0,9:100}
-};
+<div class="tpanel" id="tp2">
+<div class="sec"><div class="stit">Name Vibration — "${name}"</div>
+<table class="dt"><thead><tr><th>Component</th><th>Number</th><th>Planet</th><th>Success Rate</th><th>Strength</th></tr></thead><tbody>
+<tr><td>Name Root</td><td class="mono">${n.root}</td><td>${PL[n.root]}</td><td><span class="rate ${rc(nrR)}">${nrR}%</span></td><td><div class="meter"><div class="mf" style="width:${nrR}%;background:${mc(nrR)}"></div></div></td></tr>
+<tr><td>Soul Urge (vowels)</td><td class="mono">${n.soul}</td><td>${PL[n.soul]}</td><td><span class="rate ${rc(sR)}">${sR}%</span></td><td><div class="meter"><div class="mf" style="width:${sR}%;background:${mc(sR)}"></div></div></td></tr>
+<tr><td>Personality (consonants)</td><td class="mono">${n.pers}</td><td>${PL[n.pers]}</td><td><span class="rate ${rc(pR)}">${pR}%</span></td><td><div class="meter"><div class="mf" style="width:${pR}%;background:${mc(pR)}"></div></div></td></tr>
+<tr><td>Compound</td><td class="mono" style="color:var(--gd)">${n.total}</td><td colspan="3" style="font-size:12px;color:var(--t2)">"${compInfo.n}" — ${compInfo.t.replace('_',' ')}</td></tr>
+</tbody></table></div>
+<div class="sec" style="background:linear-gradient(135deg,rgba(212,168,83,.06),rgba(212,168,83,.02));border-color:rgba(212,168,83,.2)">
+<div class="stit">💡 Best Name Root Numbers for Driver ${d} × Conductor ${c}</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">${bestRoots.map((r,i)=>`<div style="text-align:center;padding:10px;background:${i<3?'var(--gg)':'var(--s2)'};border:1px solid ${i<3?'rgba(212,168,83,.3)':'var(--bd)'};border-radius:8px;min-width:60px"><div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:${i<3?'var(--gd)':'var(--tx)'}">${r.r}</div><div style="font-size:10px;color:var(--t2)">${r.rate}%</div><div style="font-size:9px;color:var(--t2)">${PL[r.r].split(' ')[0]}</div></div>`).join('')}</div>
+<div style="margin-top:12px;font-size:12px;color:var(--t2)">Your name root is <strong style="color:var(--gd)">${n.root}</strong>. ${bestRoots.findIndex(r=>r.r===n.root)<=2?'✅ Already optimal!':'Consider name adjustments → see Name Correction tab.'}</div>
+</div>
+</div>
 
-// DC COMBO RATES — from 257-person validation (only combos with 3+ people)
-const DC_RATES = {
-  '1-1':83,'1-3':50,'1-4':100,'1-5':66,'1-7':57,'1-8':80,'1-9':50,
-  '2-1':33,'2-2':33,'2-3':33,'2-5':33,'2-6':66,'2-7':80,'2-8':66,'2-9':25,
-  '3-1':75,'3-2':66,'3-3':33,'3-4':57,'3-5':85,'3-6':66,'3-8':60,
-  '4-1':100,'4-2':60,'4-4':75,'4-5':66,'4-7':40,
-  '5-2':100,'5-3':75,'5-4':66,'5-6':80,'5-8':25,'5-9':100,
-  '6-1':75,'6-2':66,'6-3':66,'6-4':100,'6-7':66,'6-8':50,
-  '7-1':66,'7-4':100,'7-7':66,'7-8':66,'7-9':25,
-  '8-2':66,'8-3':50,'8-5':20,'8-7':100,'8-8':80,'8-9':50,
-  '9-1':66,'9-5':75,'9-9':25
-};
+<div class="tpanel" id="tp3">
+${corr.length?`<div class="csec">
+<div class="stit" style="color:var(--gn)">✏️ Name Correction Suggestions — Personalized for Driver ${d} × Conductor ${c}</div>
+<div style="padding:12px;background:var(--s1);border:1px solid var(--bd);border-radius:8px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap"><div><strong>${name}</strong> <span style="font-size:12px;color:var(--t2);margin-left:8px">R=${corrOrig.root} S=${corrOrig.soul} P=${corrOrig.pers}</span></div><span class="mono" style="color:var(--t2)">Score: ${corrOrig.score.toFixed(1)}</span></div>
+<table class="ctbl"><thead><tr><th>Suggested Name</th><th>Type</th><th>Root</th><th>Drv×Name</th><th>Cnd×Name</th><th>Boost</th><th>Score</th></tr></thead><tbody>
+${corr.map(([sn,sd],i)=>{const b=sd.score-corrOrig.score;const dh=sd.drvH!==null&&sd.drvH!==undefined?sd.drvH+'%':'—';const ch2=sd.cndH!==null&&sd.cndH!==undefined?sd.cndH+'%':'—';const dc2=sd.drvH>=75?'var(--gn)':sd.drvH!==null&&sd.drvH<=40?'var(--rd)':'var(--t2)';const cc2=sd.cndH>=75?'var(--gn)':sd.cndH!==null&&sd.cndH<=40?'var(--rd)':'var(--t2)';const tg={add:'ctg-a',rem:'ctg-r',swp:'ctg-s',dbl:'ctg-d'};return`<tr><td><strong>${sn}</strong>${i===0?'<span class="cbst">Best</span>':''}<div style="font-size:11px;color:var(--t2)">${sd.method}</div></td><td><span class="ctg ${tg[sd.tag]||''}">${sd.tag}</span></td><td class="mono">${sd.root}</td><td class="mono" style="color:${dc2}">${dh}</td><td class="mono" style="color:${cc2}">${ch2}</td><td class="boost">+${b.toFixed(1)}</td><td><span class="rate ${rc(sd.score)}">${sd.score.toFixed(0)}%</span></td></tr>`}).join('')}
+</tbody></table>
+<div class="cnote"><strong>How this works:</strong> We test hundreds of spelling variations and score each against YOUR specific birth numbers. "Drv×Name" = how well name root harmonizes with Driver ${d}. "Cnd×Name" = harmony with Conductor ${c}. These rates come from real 251-person data.<br><br><strong>Minor changes</strong> (add h, double a letter) are low-risk and common. For significant name changes, consult a numerologist who can factor in your full Vedic chart.</div>
+</div>`:`<div class="sec"><div class="stit">✏️ Name Correction Analysis</div><div style="text-align:center;padding:20px;color:var(--t2)">✅ Your name is already well-optimized for Driver ${d} × Conductor ${c}!</div></div>`}
+</div>
 
-function reduce(t) {
-  while (t > 9 && t !== 11 && t !== 22 && t !== 33) {
-    t = String(t).split('').reduce((a,b) => a + parseInt(b), 0);
-  }
-  return t;
+<div class="tpanel" id="tp4">
+<div class="sec"><div class="stit">📊 Data-Backed Insights</div>
+${insights.map(i=>`<div class="ri"><div class="ric ${i.t==='g'?'ric-g':i.t==='w'?'ric-w':'ric-i'}">${i.t==='g'?'✓':i.t==='w'?'!':'ℹ'}</div><div class="rit">${i.m}</div></div>`).join('')}
+</div>
+<div class="sec"><div class="stit">🙏 Remedies for Your Numbers</div>
+<div class="ri"><div class="ric ric-i">☀</div><div class="rit"><strong>For Driver ${d} (${dp.planet}):</strong><br>${dp.remedies.join(' · ')}<br>Mantra: <em>${dp.mantras[0]}</em></div></div>
+<div class="ri"><div class="ric ric-i">🌟</div><div class="rit"><strong>For Conductor ${c} (${cp.planet}):</strong><br>${cp.remedies.join(' · ')}<br>Mantra: <em>${cp.mantras[0]}</em></div></div>
+${n.soul!==d&&n.soul!==c?`<div class="ri"><div class="ric ric-i">💎</div><div class="rit"><strong>For Soul Urge ${n.soul} (${NP[n.soul].planet}):</strong><br>${NP[n.soul].remedies.join(' · ')}</div></div>`:''}
+</div>
+<div class="sec"><div class="stit">⚖️ What We Tested vs What's Real</div>
+<div class="ri"><div class="ric ric-g">✓</div><div class="rit"><strong>VALIDATED</strong>: Individual Driver/Conductor/Soul/Personality rates, DC combinations, Soul↔Driver friendship, Mercury birth days (5/14/23 = 78% success)</div></div>
+<div class="ri"><div class="ric ric-w">✗</div><div class="rit"><strong>NOT VALIDATED</strong>: Compound number meanings (10-52), most planetary friend/enemy charts, Lo Shu Grid planes, 4-8 karmic axis (actually showed 75% success!)</div></div>
+<div class="ri"><div class="ric ric-i">ℹ</div><div class="rit"><strong>Accuracy</strong>: ~69% overall with +4% lift. Extremes are where we're strongest: top-scored people = 81% precision, bottom-scored = 68% precision. The middle is genuinely uncertain.</div></div>
+</div>
+</div>
+
+<div class="disclaimer"><strong>Methodology & Disclaimer</strong><br>Success rates derived from 251 historically documented individuals across business, politics, sports, entertainment, science, and crime. Traditional numerology knowledge compiled from Cheiro, ancient Chaldean tablets, Vedic sources, and multiple practitioner references. Compound number meanings are traditional lore — our data showed they have cultural but not predictive significance. This tool is for education and self-reflection. All data processed locally.</div>
+`;
+const el=document.getElementById('results');el.innerHTML=html;el.classList.add('active');el.scrollIntoView({behavior:'smooth',block:'start'})
 }
-
-function calcName(name) {
-  const clean = name.toUpperCase().replace(/[^A-Z]/g, '');
-  let total = 0, vowels = 0;
-  for (const c of clean) {
-    const v = CHALDEAN[c] || 0;
-    total += v;
-    if (VOWELS.has(c)) vowels += v;
-  }
-  return {
-    total, root: reduce(total), compound: total,
-    soul: reduce(vowels), pers: reduce(total - vowels),
-    letters: clean
-  };
-}
-
-function driver(day) {
-  let d = day;
-  while (d > 9) d = String(d).split('').reduce((a,b) => a + parseInt(b), 0);
-  return d;
-}
-
-function conductor(day, month, year) {
-  const total = String(day).split('').concat(String(month).split(''), String(year).split(''))
-    .reduce((a,b) => a + parseInt(b), 0);
-  let c = total;
-  while (c > 9) c = String(c).split('').reduce((a,b) => a + parseInt(b), 0);
-  return c;
-}
-
-function rateClass(rate) {
-  if (rate >= 70) return 'rate-good';
-  if (rate <= 45) return 'rate-bad';
-  return 'rate-mid';
-}
-
-function rateLabel(rate) {
-  if (rate >= 75) return 'Strong';
-  if (rate >= 65) return 'Good';
-  if (rate >= 55) return 'Average';
-  if (rate >= 45) return 'Weak';
-  return 'Caution';
-}
-
-function meterColor(rate) {
-  if (rate >= 70) return 'var(--green)';
-  if (rate >= 55) return 'var(--gold)';
-  return 'var(--red)';
-}
-
-function getPlanet(n) {
-  const r = n > 9 ? reduce(n) : n;
-  return PLANETS[r] || '';
-}
-
-function getVerdict(score) {
-  if (score >= 72) return { text: 'Exceptional Alignment', color: 'var(--green)' };
-  if (score >= 65) return { text: 'Strong Vibration', color: 'var(--green)' };
-  if (score >= 58) return { text: 'Favorable Energy', color: 'var(--gold)' };
-  if (score >= 52) return { text: 'Mixed Signals', color: 'var(--text2)' };
-  if (score >= 45) return { text: 'Challenging Pattern', color: 'var(--red)' };
-  return { text: 'Significant Friction', color: 'var(--red)' };
-}
-
-function suggestBestRoots(drv, cnd) {
-  const roots = [];
-  for (let r = 1; r <= 9; r++) {
-    // Combine: global rate + Driver-specific rate + Conductor-specific rate
-    const globalRate = NAME_ROOT_RATES[r] || 60;
-    const drvRate = (DRV_NR_RATES[drv] || {})[r];
-    const cndRate = (CND_NR_RATES[cnd] || {})[r];
-    
-    let score = globalRate;
-    let sources = 1;
-    if (drvRate !== undefined) { score += drvRate; sources++; }
-    if (cndRate !== undefined) { score += cndRate; sources++; }
-    score = Math.round(score / sources);
-    
-    const hasData = drvRate !== undefined || cndRate !== undefined;
-    roots.push({ root: r, rate: score, planet: PLANETS[r], hasData,
-      drvRate: drvRate !== undefined ? drvRate : null,
-      cndRate: cndRate !== undefined ? cndRate : null });
-  }
-  roots.sort((a, b) => b.rate - a.rate);
-  return roots;
-}
-
-function nameScoreDOB(name, drv, cnd) {
-  const c = calcName(name);
-  const r = c.root > 9 ? reduce(c.root) : c.root;
-  const s = c.soul > 9 ? reduce(c.soul) : c.soul;
-  const p = c.pers > 9 ? reduce(c.pers) : c.pers;
-  
-  // Global rates
-  const globalRoot = NAME_ROOT_RATES[r] || 60;
-  const globalSoul = SOUL_RATES[s] || 60;
-  const globalPers = PERS_RATES[p] || 60;
-  
-  // DOB-specific rates (Driver × NameRoot and Conductor × NameRoot)
-  const drvNR = (DRV_NR_RATES[drv] || {})[r];
-  const cndNR = (CND_NR_RATES[cnd] || {})[r];
-  
-  // Weighted: DOB-specific rates count more (they measure harmony)
-  let rootScore = globalRoot;
-  let rootSources = 1;
-  if (drvNR !== undefined) { rootScore += drvNR * 1.5; rootSources += 1.5; }
-  if (cndNR !== undefined) { rootScore += cndNR * 1.5; rootSources += 1.5; }
-  rootScore = rootScore / rootSources;
-  
-  // Final: root (DOB-weighted) + soul + personality
-  const score = (rootScore + globalSoul + globalPers) / 3;
-  
-  return {
-    score, root: r, soul: s, pers: p, compound: c.total,
-    drvHarmony: drvNR, cndHarmony: cndNR
-  };
-}
-
-function nameScore(name) {
-  // Fallback without DOB (used in non-DOB contexts)
-  const c = calcName(name);
-  const r = c.root > 9 ? reduce(c.root) : c.root;
-  const s = c.soul > 9 ? reduce(c.soul) : c.soul;
-  const p = c.pers > 9 ? reduce(c.pers) : c.pers;
-  return {
-    score: ((NAME_ROOT_RATES[r]||60) + (SOUL_RATES[s]||60) + (PERS_RATES[p]||60)) / 3,
-    root: r, soul: s, pers: p, compound: c.total
-  };
-}
-
-function generateCorrections(name, drv, cnd) {
-  const original = name.trim();
-  const origData = nameScoreDOB(original, drv, cnd);
-  const suggestions = new Map();
-  const parts = original.split(/\s+/);
-
-  const SIMILAR = {
-    'C':['K','S'],'K':['C','Q'],'S':['Z','C'],'Z':['S'],
-    'V':['W'],'W':['V'],'I':['Y','EE'],'Y':['I'],
-    'J':['G'],'G':['J'],'T':['TH','D'],'D':['T'],
-    'F':['PH'],'N':['NN'],'A':['AA'],'E':['EE','I'],
-    'R':['RR'],'L':['LL']
-  };
-
-  function tryCandidate(candidate, method, tag) {
-    if (candidate === original) return;
-    if (candidate.replace(/\s+/g,'').length < 3) return;
-    const data = nameScoreDOB(candidate, drv, cnd);
-    if (data.score > origData.score + 0.5 && !suggestions.has(candidate)) {
-      suggestions.set(candidate, { ...data, method, tag });
-    }
-  }
-
-  for (let pi = 0; pi < parts.length; pi++) {
-    const part = parts[pi];
-    const mk = (newPart) => { const p = [...parts]; p[pi] = newPart; return p.join(' '); };
-
-    // 1. Add letter at end
-    for (const ch of 'aehisn') {
-      tryCandidate(mk(part + ch), `Add "${ch}" after ${part}`, 'add');
-    }
-
-    // 2. Double consonant
-    for (let i = 0; i < part.length; i++) {
-      if (!VOWELS.has(part[i].toUpperCase()) && /[a-zA-Z]/.test(part[i])) {
-        tryCandidate(mk(part.slice(0,i+1) + part[i] + part.slice(i+1)), `Double "${part[i]}" → "${part[i]+part[i]}"`, 'double');
-      }
-    }
-
-    // 3. Double vowel
-    for (let i = 0; i < part.length; i++) {
-      if (VOWELS.has(part[i].toUpperCase())) {
-        tryCandidate(mk(part.slice(0,i+1) + part[i] + part.slice(i+1)), `Double "${part[i]}" → "${part[i]+part[i]}"`, 'double');
-      }
-    }
-
-    // 4. Remove a letter (word must stay 3+)
-    if (part.length >= 4) {
-      for (let i = 0; i < part.length; i++) {
-        const nw = part.slice(0,i) + part.slice(i+1);
-        if (nw.length >= 3) tryCandidate(mk(nw), `Remove "${part[i]}" from ${part}`, 'remove');
-      }
-    }
-
-    // 5. Insert at each position
-    for (let i = 1; i < part.length; i++) {
-      for (const ch of 'aheiou') {
-        tryCandidate(mk(part.slice(0,i) + ch + part.slice(i)), `Insert "${ch}" in ${part}`, 'add');
-      }
-    }
-
-    // 6. Replace with similar sounding
-    for (let i = 0; i < part.length; i++) {
-      const upper = part[i].toUpperCase();
-      if (SIMILAR[upper]) {
-        for (const rep of SIMILAR[upper]) {
-          const isFirst = i === 0;
-          const repFormatted = isFirst ? rep[0].toUpperCase() + rep.slice(1).toLowerCase() : rep.toLowerCase();
-          tryCandidate(mk(part.slice(0,i) + repFormatted + part.slice(i+1)), `"${part[i]}" → "${repFormatted}"`, 'swap');
-        }
-      }
-    }
-  }
-
-  // Sort by score and deduplicate by root+soul+pers combo
-  let sorted = [...suggestions.entries()]
-    .sort((a, b) => b[1].score - a[1].score);
-  
-  // Keep only unique root/soul/pers combos (best of each)
-  const seenCombos = new Set();
-  const unique = [];
-  for (const [name, data] of sorted) {
-    const key = `${data.root}-${data.soul}-${data.pers}`;
-    if (!seenCombos.has(key)) {
-      seenCombos.add(key);
-      unique.push([name, data]);
-    }
-    if (unique.length >= 10) break;
-  }
-
-  return { suggestions: unique, original: origData };
-}
-
-function buildCorrectionHTML(name, drv, cnd) {
-  const { suggestions, original } = generateCorrections(name, drv, cnd);
-  
-  if (suggestions.length === 0) {
-    return `
-      <div class="correction-section">
-        <div class="correction-header"><h3>✏️ Name Correction Analysis</h3></div>
-        <div class="corr-original">
-          <span class="corr-original-name">${name}</span>
-          <span class="corr-original-score">Score: ${original.score.toFixed(1)}</span>
-        </div>
-        <div style="text-align:center;padding:20px;color:var(--text2);font-size:14px">
-          ✅ Your name is already well-optimized for your DOB (Driver ${drv}, Conductor ${cnd})! No significant improvements found.
-        </div>
-      </div>`;
-  }
-
-  const tagClass = {add:'corr-tag-add', remove:'corr-tag-remove', swap:'corr-tag-swap', double:'corr-tag-double'};
-  const tagLabel = {add:'ADD', remove:'REMOVE', swap:'SWAP', double:'DOUBLE'};
-  const best = suggestions[0];
-
-  let rows = suggestions.map(([sName, data], i) => {
-    const boost = data.score - original.score;
-    const drvH = data.drvHarmony !== null && data.drvHarmony !== undefined ? `${data.drvHarmony}%` : '—';
-    const cndH = data.cndHarmony !== null && data.cndHarmony !== undefined ? `${data.cndHarmony}%` : '—';
-    const drvColor = data.drvHarmony >= 75 ? 'var(--green)' : data.drvHarmony !== null && data.drvHarmony <= 40 ? 'var(--red)' : 'var(--text2)';
-    const cndColor = data.cndHarmony >= 75 ? 'var(--green)' : data.cndHarmony !== null && data.cndHarmony <= 40 ? 'var(--red)' : 'var(--text2)';
-    return `<tr>
-      <td>
-        <div class="corr-name">${sName}${i === 0 ? '<span class="corr-best-badge">Best Match</span>' : ''}</div>
-        <div class="corr-change">${data.method}</div>
-      </td>
-      <td><span class="corr-tag ${tagClass[data.tag]||''}">${tagLabel[data.tag]||data.tag}</span></td>
-      <td class="mono">${data.root}</td>
-      <td class="mono" style="color:${drvColor}">${drvH}</td>
-      <td class="mono" style="color:${cndColor}">${cndH}</td>
-      <td class="corr-boost">+${boost.toFixed(1)}</td>
-      <td><span class="card-rate ${rateClass(data.score)}">${data.score.toFixed(0)}%</span></td>
-    </tr>`;
-  }).join('');
-
-  // DOB harmony info for original name
-  const origDrvH = original.drvHarmony !== null && original.drvHarmony !== undefined ? `${original.drvHarmony}%` : '—';
-  const origCndH = original.cndHarmony !== null && original.cndHarmony !== undefined ? `${original.cndHarmony}%` : '—';
-
-  return `
-    <div class="correction-section">
-      <div class="correction-header"><h3>✏️ Name Correction Suggestions</h3></div>
-      <div style="font-size:12px;color:var(--text2);margin-bottom:12px">
-        Personalized for your <strong style="color:var(--gold)">Driver ${drv} × Conductor ${cnd}</strong> — different DOBs get different recommendations
-      </div>
-      
-      <div class="corr-original">
-        <div>
-          <span class="corr-original-name">Current: ${name}</span>
-          <span style="font-size:12px;color:var(--text2);margin-left:8px">Root=${original.root} | Drv harmony: ${origDrvH} | Cnd harmony: ${origCndH}</span>
-        </div>
-        <span class="corr-original-score">Score: ${original.score.toFixed(1)}</span>
-      </div>
-
-      <table class="corr-table">
-        <thead>
-          <tr>
-            <th>Suggested Spelling</th>
-            <th>Type</th>
-            <th>Root</th>
-            <th>Drv×Name</th>
-            <th>Cnd×Name</th>
-            <th>Boost</th>
-            <th>Score</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
-
-      <div class="corr-note">
-        <strong>How this works:</strong> Unlike generic calculators, we test spelling variations against YOUR specific birth numbers.
-        The "Drv×Name" column shows how well the name root harmonizes with your Driver (${drv}), and "Cnd×Name" with your Conductor (${cnd}).
-        These harmony rates come from real data — how people with your Driver/Conductor performed when their name had that specific root.<br><br>
-        <strong>Important:</strong> Minor spelling adjustments (adding h, doubling a letter) are common and low-risk. 
-        For significant name changes, consult a professional who can factor in your complete chart.
-      </div>
-    </div>`;
-}
-
-function analyze() {
-  const name = document.getElementById('nameInput').value.trim();
-  const dobEl = document.getElementById('dobInput');
-  if (!name || !dobEl.value) { alert('Please enter both name and date of birth'); return; }
-
-  const [year, month, day] = dobEl.value.split('-').map(Number);
-  const drv = driver(day);
-  const cnd = conductor(day, month, year);
-  const cn = calcName(name);
-  const dcCombo = `${drv}-${cnd}`;
-
-  // Rates
-  const drvRate = DRIVER_RATES[drv] || 60;
-  const cndRate = CONDUCTOR_RATES[cnd] || 60;
-  const dcRate = DC_RATES[dcCombo] || null;
-  const nameRootRate = NAME_ROOT_RATES[cn.root > 9 ? reduce(cn.root) : cn.root] || 60;
-  const soulRate = SOUL_RATES[cn.soul > 9 ? reduce(cn.soul) : cn.soul] || 60;
-  const persRate = PERS_RATES[cn.pers > 9 ? reduce(cn.pers) : cn.pers] || 60;
-
-  // Composite score
-  const scores = [drvRate, cndRate, nameRootRate, soulRate, persRate];
-  if (dcRate !== null) scores.push(dcRate);
-  const composite = Math.round(scores.reduce((a,b) => a+b, 0) / scores.length);
-  const verdict = getVerdict(composite);
-
-  // Ring percentage
-  const ringPct = Math.min(100, Math.max(0, (composite - 20) * 1.25));
-  const circumference = 2 * Math.PI * 88;
-  const dashOffset = circumference * (1 - ringPct / 100);
-
-  // Recommendations
-  const recos = [];
-  if (drvRate >= 70) recos.push({type:'good', text:`Your <strong>Driver ${drv} (${getPlanet(drv)})</strong> carries strong energy — ${drvRate}% success correlation in our data. This is your natural personality vibration.`});
-  else if (drvRate <= 50) recos.push({type:'warn', text:`Your <strong>Driver ${drv} (${getPlanet(drv)})</strong> showed only ${drvRate}% success correlation. This doesn't determine your fate — but be aware of tendencies toward isolation or scattered energy.`});
-
-  if (cndRate >= 70) recos.push({type:'good', text:`<strong>Conductor ${cnd} (${getPlanet(cnd)})</strong> is one of the strongest life paths — ${cndRate}% success rate across 257 people.`});
-  else if (cndRate <= 50) recos.push({type:'warn', text:`<strong>Conductor ${cnd} (${getPlanet(cnd)})</strong> showed only ${cndRate}% success correlation. People with this life path may face more karmic challenges — awareness is key.`});
-
-  if (dcRate !== null) {
-    if (dcRate >= 80) recos.push({type:'good', text:`Your <strong>Driver-Conductor combination (${dcCombo})</strong> is exceptional — ${dcRate}% success rate! This is one of the strongest pairs in Chaldean numerology.`});
-    else if (dcRate <= 33) recos.push({type:'warn', text:`Your <strong>DC combination (${dcCombo})</strong> showed only ${dcRate}% success in our data. This combination may create inner tension between personality and destiny.`});
-  }
-
-  if (soulRate >= 70) recos.push({type:'good', text:`Name's <strong>Soul Urge ${cn.soul}</strong> (from vowels) has strong alignment — ${soulRate}% correlation. Your inner desires resonate well.`});
-  else if (soulRate <= 50) recos.push({type:'warn', text:`Name's <strong>Soul Urge ${cn.soul}</strong> showed weaker results (${soulRate}%). Consider if a name variation might shift the vowel energy.`});
-
-  if (persRate >= 70) recos.push({type:'good', text:`Name's <strong>Personality ${cn.pers}</strong> (from consonants) is strong at ${persRate}%. The impression you make on others works in your favor.`});
-  else if (persRate <= 50) recos.push({type:'warn', text:`Name's <strong>Personality ${cn.pers}</strong> showed only ${persRate}% correlation. The outer impression your name creates may face friction.`});
-
-  recos.push({type:'info', text:`Your name <strong>"${name}"</strong> totals <strong>${cn.total}</strong> (Compound) → Root <strong>${cn.root}</strong>. In Chaldean tradition, the compound number carries its own significance beyond the root.`});
-
-  // Best name roots for this DOB
-  const bestRoots = suggestBestRoots(drv, cnd);
-
-  const html = `
-    <div class="score-hero">
-      <div class="score-label">Composite Numerology Score</div>
-      <div class="score-ring-wrap">
-        <svg width="200" height="200" viewBox="0 0 200 200">
-          <circle class="score-ring-bg" cx="100" cy="100" r="88"/>
-          <circle class="score-ring-fill" cx="100" cy="100" r="88"
-            stroke="${verdict.color}"
-            stroke-dasharray="${circumference}"
-            stroke-dashoffset="${dashOffset}"/>
-        </svg>
-        <div class="score-number" style="color:${verdict.color}">${composite}</div>
-      </div>
-      <div class="score-verdict" style="color:${verdict.color}">${verdict.text}</div>
-      <div style="margin-top:8px;font-size:12px;color:var(--text2)">Based on Driver-Conductor, Name Root, Soul Urge & Personality analysis</div>
-    </div>
-
-    <div class="card-grid">
-      <div class="card">
-        <div class="card-title">Driver (Psychic) Number</div>
-        <div class="card-number">${drv}</div>
-        <div class="card-planet">${getPlanet(drv)}</div>
-        <span class="card-rate ${rateClass(drvRate)}">${drvRate}% — ${rateLabel(drvRate)}</span>
-        <div class="meter"><div class="meter-fill" style="width:${drvRate}%;background:${meterColor(drvRate)}"></div></div>
-        <div style="margin-top:8px;font-size:12px;color:var(--text2)">Born on ${day}${day===1||day===21||day===31?'st':day===2||day===22?'nd':day===3||day===23?'rd':'th'}</div>
-      </div>
-      <div class="card">
-        <div class="card-title">Conductor (Destiny) Number</div>
-        <div class="card-number">${cnd}</div>
-        <div class="card-planet">${getPlanet(cnd)}</div>
-        <span class="card-rate ${rateClass(cndRate)}">${cndRate}% — ${rateLabel(cndRate)}</span>
-        <div class="meter"><div class="meter-fill" style="width:${cndRate}%;background:${meterColor(cndRate)}"></div></div>
-        <div style="margin-top:8px;font-size:12px;color:var(--text2)">Full DOB sum</div>
-      </div>
-    </div>
-
-    <div class="dc-section">
-      <div class="card-title" style="text-align:center">Driver–Conductor Combination</div>
-      <div class="dc-combo-display">
-        <div>
-          <div class="dc-num">${drv}</div>
-          <div class="dc-label">Driver</div>
-        </div>
-        <div class="dc-sep">×</div>
-        <div>
-          <div class="dc-num">${cnd}</div>
-          <div class="dc-label">Conductor</div>
-        </div>
-        <div class="dc-sep">=</div>
-        <div>
-          <div class="dc-num" style="color:${dcRate ? (dcRate >= 70 ? 'var(--green)' : dcRate <= 40 ? 'var(--red)' : 'var(--gold)') : 'var(--text2)'}">${dcRate !== null ? dcRate + '%' : '—'}</div>
-          <div class="dc-label">${dcRate !== null ? rateLabel(dcRate) : 'Rare combo'}</div>
-        </div>
-      </div>
-      <div style="text-align:center;font-size:13px;color:var(--text2)">
-        ${dcRate !== null ? `This combination appeared in our 257-person dataset with a ${dcRate}% success correlation.` : 'This combination is rare in our dataset — insufficient data for a reliable rating.'}
-      </div>
-    </div>
-
-    <div class="name-breakdown">
-      <div class="card-title">Name Vibration Analysis — "${name}"</div>
-      <table class="name-table">
-        <thead>
-          <tr><th>Component</th><th>Number</th><th>Planet</th><th>Success Rate</th><th>Strength</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Name Root (total)</td>
-            <td class="mono">${cn.root}${cn.root !== reduce(cn.total) ? '' : ''}</td>
-            <td>${getPlanet(cn.root)}</td>
-            <td><span class="card-rate ${rateClass(nameRootRate)}">${nameRootRate}%</span></td>
-            <td><div class="meter"><div class="meter-fill" style="width:${nameRootRate}%;background:${meterColor(nameRootRate)}"></div></div></td>
-          </tr>
-          <tr>
-            <td>Soul Urge (vowels)</td>
-            <td class="mono">${cn.soul}</td>
-            <td>${getPlanet(cn.soul)}</td>
-            <td><span class="card-rate ${rateClass(soulRate)}">${soulRate}%</span></td>
-            <td><div class="meter"><div class="meter-fill" style="width:${soulRate}%;background:${meterColor(soulRate)}"></div></div></td>
-          </tr>
-          <tr>
-            <td>Personality (consonants)</td>
-            <td class="mono">${cn.pers}</td>
-            <td>${getPlanet(cn.pers)}</td>
-            <td><span class="card-rate ${rateClass(persRate)}">${persRate}%</span></td>
-            <td><div class="meter"><div class="meter-fill" style="width:${persRate}%;background:${meterColor(persRate)}"></div></div></td>
-          </tr>
-          <tr>
-            <td>Compound Number</td>
-            <td class="mono" style="color:var(--gold)">${cn.total}</td>
-            <td colspan="3" style="font-size:13px;color:var(--text2)">The unreduced total carries occult significance in Chaldean tradition</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="suggest-section">
-      <div class="card-title">💡 Optimal Name Root Numbers for Driver ${drv} × Conductor ${cnd}</div>
-      <div style="font-size:13px;color:var(--text2);margin-top:4px">Personalized for YOUR birth numbers — not generic recommendations</div>
-      <div class="suggest-grid">
-        ${bestRoots.map((r, i) => `
-          <div class="suggest-chip ${i < 3 ? 'best' : ''}" title="${r.drvRate !== null ? 'Drv harmony: '+r.drvRate+'%' : ''} ${r.cndRate !== null ? 'Cnd harmony: '+r.cndRate+'%' : ''}">
-            <div style="font-size:20px;font-family:'Cormorant Garamond',serif">${r.root}</div>
-            <div style="font-size:10px;margin-top:2px">${r.rate}%</div>
-            <div style="font-size:8px;color:var(--text2)">${r.planet.split(' ')[0]}</div>
-          </div>
-        `).join('')}
-      </div>
-      <div style="margin-top:12px;font-size:12px;color:var(--text2)">
-        Your current name root is <strong style="color:var(--gold)">${cn.root}</strong>. 
-        ${(() => {
-          const currentRank = bestRoots.findIndex(r => r.root === (cn.root > 9 ? reduce(cn.root) : cn.root));
-          if (currentRank <= 1) return '✅ Excellent — your name root is among the best for your DOB!';
-          if (currentRank <= 3) return '👍 Good alignment with your birth numbers.';
-          return `Consider name variations reducing to root <strong>${bestRoots[0].root}</strong> (${bestRoots[0].planet}) or <strong>${bestRoots[1].root}</strong> (${bestRoots[1].planet}) for stronger harmony with your DOB.`;
-        })()}
-      </div>
-    </div>
-
-    <div class="reco-section">
-      <div class="card-title">📊 Data-Backed Insights</div>
-      ${recos.map(r => `
-        <div class="reco-item">
-          <div class="reco-icon ${r.type === 'good' ? 'reco-good' : r.type === 'warn' ? 'reco-warn' : 'reco-info'}">
-            ${r.type === 'good' ? '✓' : r.type === 'warn' ? '!' : 'ℹ'}
-          </div>
-          <div class="reco-text">${r.text}</div>
-        </div>
-      `).join('')}
-    </div>
-
-    ${buildCorrectionHTML(name, drv, cnd)}
-
-    <div class="disclaimer">
-      <strong>Methodology & Disclaimer</strong><br>
-      Success rates derived from analysis of 257 historically documented individuals across business, politics, sports, entertainment, and science.
-      "Success rate" means the percentage of people with that number who achieved sustained positive outcomes in our dataset.
-      Numerology provides patterns and tendencies, not certainties. Individual outcomes depend on countless factors beyond numbers.
-      This tool is for educational and self-reflection purposes. All data is processed locally in your browser.
-    </div>
-  `;
-
-  const el = document.getElementById('results');
-  el.innerHTML = html;
-  el.classList.add('active');
-  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
+function showTab(i){document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',j===i));document.querySelectorAll('.tpanel').forEach((t,j)=>t.classList.toggle('active',j===i))}
 </script>
 </body>
 </html>
